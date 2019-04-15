@@ -1,2 +1,2 @@
 #!/bin/sh
-docker run -v $(pwd)/data geodata/gdal $@
+docker run -it -v $(pwd):/data geodata/gdal $@
