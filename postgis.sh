@@ -1,2 +1,2 @@
 #!/bin/sh
-docker run -it -v $(pwd):/data postgis $@
+docker run -it --env PGPASSWORD=$PGPASSWORD -v $(pwd):/data postgis $@
