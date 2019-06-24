@@ -63,3 +63,10 @@ stringData:
 ```
 
 Load into the cluster using `kubectl apply -f <filename>`.
+
+
+## Geoserver
+
+Geoserver is a server backend for accessing geospatial information. A kubernetes
+config for a single node instance using a local data storage mount is available
+in `geoserver.yml`.
