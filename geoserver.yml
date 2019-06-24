@@ -1,23 +1,24 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: postgis-service
+  name: geoserver-service
 spec:
   type: NodePort
   selector:
-    app: postgis
+    app: geoserver
   ports:
   - protocol: TCP
-    port: 5432
-    nodePort: 31313
+    port: 8080
+    nodePort: 31312
+    name: geoserver-port
 ---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: postgis-pv
+  name: geoserver-pv
 spec:
   capacity:
-    storage: 40G
+    storage: 10G
   # volumeMode field requires BlockVolume Alpha feature gate to be enabled.
   volumeMode: Filesystem
   accessModes:
@@ -25,7 +26,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: local-storage
   local:
-    path: /home/max/dbpro/data
+    path: /home/max/dbpro/geoserver
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -38,53 +39,54 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: postgis-pvc
+  name: geoserver-pvc
   labels:
-    app: postgis
+    app: geoserver
 spec:
   storageClassName: local-storage
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 40G
-  volumeName: postgis-pv
+      storage: 10G
+  volumeName: geoserver-pv
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgis-deployment
+  name: geoserver-deployment
   labels:
-    app: postgis
+    app: geoserver
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgis
+      app: geoserver
   template:
     metadata:
       labels:
-        app: postgis
+        app: geoserver
     spec:
       containers:
-      - name: postgis-container
-        image: mdillon/postgis:11-alpine
+      - name: geoserver-container
+        image: kartoza/geoserver:latest
         env:
-        - name: POSTGRES_PASSWORD
+        - name: USERNAME
+          value: "geouser"
+        - name: PASSWORD
           valueFrom:
             secretKeyRef:
-              name: postgis-secret
+              name: geoserver-secret
               key: password
-        - name: POSTGRES_DB
-          value: geospatial
-        - name: POSTGIS_ENABLE_OUTDB_RASTERS
-          value: "1"
-        - name: POSTGIS_GDAL_ENABLED_DRIVERS
-          value: ENABLE_ALL
+        - name: GEOSERVER_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: geoserver-secret
+              key: admin-password
         volumeMounts:
-        - mountPath: /var/lib/postgresql/data
-          name: postgis-volume
+        - mountPath: /opt/geoserver/data_dir
+          name: geoserver-volume
       volumes:
-      - name: postgis-volume
+      - name: geoserver-volume
         persistentVolumeClaim:
-          claimName: postgis-pvc
+          claimName: geoserver-pvc
